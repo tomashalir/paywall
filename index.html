@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Scanbass is an audio-reactive visualizer. Upload music, play it, and switch scenes in real time."
+    />
+    <title>Scanbass Audio Visualizer</title>
+  </head>
+  <body>
+    <div id="app">
+      <div class="visualizer-window">
+        <canvas id="webgl-canvas" aria-label="Audio reactive visualizer output"></canvas>
+      </div>
+      <div id="ui-overlay" class="panel">
+        <h1>SCANBASS // AUDIO VISUALIZER</h1>
+        <p class="panel-intro">Upload an audio file and press Play. Switch scenes and presets at any time.</p>
+        <div id="status-banner" class="status-banner" role="status" aria-live="polite"></div>
+
+        <div class="control-row">
+          <button id="upload-btn" type="button">Upload MP3/WAV</button>
+          <input id="audio-input" type="file" accept="audio/mpeg,audio/wav,audio/x-wav,audio/*" hidden />
+          <span id="track-label">No track loaded</span>
+        </div>
+
+        <div class="control-row">
+          <button id="play-btn" type="button">Play</button>
+          <button id="pause-btn" type="button">Pause</button>
+          <span id="play-state">Stopped</span>
+          <span id="time-label">00:00 / 00:00</span>
+        </div>
+
+        <div class="control-row scene-controls">
+          <button class="scene-btn" data-scene-index="0" type="button">1 Sphere</button>
+          <button class="scene-btn" data-scene-index="1" type="button">2 Flow</button>
+          <button class="scene-btn" data-scene-index="2" type="button">3 Lattice</button>
+          <span id="scene-label">Scene 1 / 3</span>
+        </div>
+
+        <div class="control-row preset-controls">
+          <button id="preset-prev-btn" type="button">Preset -</button>
+          <button id="preset-next-btn" type="button">Preset +</button>
+          <span id="preset-label">Preset 1 / 5</span>
+        </div>
+
+        <div class="control-row tuner-actions">
+          <button id="toggle-tuner-btn" type="button">Show Advanced Controls</button>
+          <button id="reset-scene-settings-btn" class="advanced-control" type="button">Reset Scene</button>
+          <button id="reset-overlay-settings-btn" class="advanced-control" type="button">Reset Overlay FX</button>
+          <button id="reset-preset-btn" class="advanced-control" type="button">Reset Preset</button>
+          <button id="save-preset-btn" class="advanced-control" type="button">Save Preset</button>
+          <button id="copy-exact-preset-btn" class="advanced-control" type="button">Copy Exact Preset</button>
+          <button id="copy-preset-btn" class="advanced-control" type="button">Copy Live Tuning JSON</button>
+          <button id="copy-scene-presets-btn" class="advanced-control" type="button">Copy Scene Tuning JSON</button>
+        </div>
+
+        <div id="tuner-panel" class="tuner-panel">
+          <div class="tuner-section">
+            <h2>Overlay FX</h2>
+            <div id="overlay-settings-grid" class="tuner-grid"></div>
+          </div>
+
+          <div class="tuner-section">
+            <h2>Scene Settings</h2>
+            <div id="scene-settings-grid" class="tuner-grid"></div>
+          </div>
+
+          <div class="tuner-section">
+            <h2>Preset Parameters</h2>
+            <div id="preset-params-grid" class="tuner-grid"></div>
+          </div>
+        </div>
+
+        <div class="hint-row">
+          <span>1-3 keys: jump to scene</span>
+          <span>Arrow keys: switch scenes</span>
+          <span>[ ] or Up/Down: switch presets</span>
+          <span>Drag & drop audio anywhere</span>
+          <span>Advanced controls are optional</span>
+        </div>
+      </div>
+
+      <div id="drop-overlay" class="drop-overlay" aria-hidden="true">
+        <div class="drop-overlay-card">Drop your audio file to load it</div>
+      </div>
+      <div id="live-adjust-hud" class="live-adjust-hud" aria-live="polite"></div>
+    </div>
+    <noscript>This app needs JavaScript enabled to run.</noscript>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
