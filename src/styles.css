@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
+@import '@fontsource/space-mono/400.css';
+@import '@fontsource/space-mono/700.css';
 
 :root {
   --bg: #050608;
@@ -521,5 +522,221 @@ button:disabled:focus-visible {
     width: min(90vw, 22rem);
     text-align: center;
     font-size: 0.72rem;
+  }
+}
+
+/* ---------- Pro gating (App Store app only) ---------- */
+
+.scene-btn.is-locked::after {
+  content: ' PRO';
+  font-size: 0.56rem;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  opacity: 0.85;
+}
+
+.paywall {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right))
+    max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+  background: rgba(2, 3, 5, 0.72);
+  backdrop-filter: blur(10px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+}
+
+.paywall.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.paywall-card {
+  width: min(100%, 24rem);
+  max-height: 100%;
+  overflow: auto;
+  padding: 1.4rem 1.3rem 1.1rem;
+  border: 1px solid var(--panel-border);
+  border-radius: 16px;
+  background: linear-gradient(150deg, rgba(12, 17, 22, 0.97), rgba(5, 7, 10, 0.97));
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(159, 211, 255, 0.08);
+  transform: translateY(8px);
+  transition: transform 180ms ease;
+}
+
+.paywall.is-open .paywall-card {
+  transform: none;
+}
+
+.paywall-eyebrow {
+  margin: 0 0 0.4rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.2em;
+  color: var(--accent);
+}
+
+.paywall-title {
+  margin: 0 0 0.45rem;
+  font-size: 1.05rem;
+  letter-spacing: 0.04em;
+  line-height: 1.3;
+}
+
+.paywall-reason {
+  margin: 0 0 0.9rem;
+  font-size: 0.72rem;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.paywall-features {
+  list-style: none;
+  margin: 0 0 1.1rem;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+.paywall-features li {
+  position: relative;
+  padding-left: 1.1rem;
+}
+
+.paywall-features li::before {
+  content: '+';
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+}
+
+.paywall-buy {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border-color: var(--accent);
+  background: rgba(159, 211, 255, 0.18);
+}
+
+.paywall-secondary-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.55rem;
+}
+
+.paywall-secondary {
+  flex: 1;
+  padding: 0.55rem 0.6rem;
+  font-size: 0.64rem;
+}
+
+.paywall-status {
+  min-height: 1.2rem;
+  margin: 0.7rem 0 0;
+  font-size: 0.64rem;
+  line-height: 1.4;
+  color: var(--muted);
+  text-align: center;
+}
+
+.paywall-status.is-error {
+  color: #ffc9c9;
+}
+
+/* ---------- Native app shell (iOS / iPadOS / macOS) ---------- */
+
+.is-native-app,
+.is-native-app body {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+.is-native-app input[type='number'] {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.is-native-app .visualizer-window {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.is-native-app .visualizer-window::before {
+  display: none;
+}
+
+.is-native-app #webgl-canvas {
+  touch-action: none;
+}
+
+.is-native-app .panel {
+  top: max(0.9rem, env(safe-area-inset-top));
+  right: max(0.9rem, env(safe-area-inset-right));
+  max-height: calc(100% - max(0.9rem, env(safe-area-inset-top)) - max(0.9rem, env(safe-area-inset-bottom)));
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+
+.is-native-app #app.is-ui-hidden .panel {
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
+}
+
+/* Developer export tools stay on the website build only. */
+.is-native-app #copy-exact-preset-btn,
+.is-native-app #copy-preset-btn,
+.is-native-app #copy-scene-presets-btn {
+  display: none;
+}
+
+.is-native-app .hint-row span {
+  display: none;
+}
+
+.is-native-app .hint-row::before {
+  content: 'Tap the visual to hide controls · Swipe left/right: scene · Swipe up/down: preset';
+}
+
+.is-native-app.platform-macos .hint-row::before {
+  content: 'Click the visual to hide controls · Arrow keys: scene / preset · Drop audio anywhere';
+}
+
+.is-native-app button {
+  min-height: 2.25rem;
+}
+
+@media (max-width: 720px) {
+  .is-native-app .panel {
+    top: auto;
+    left: max(0.55rem, env(safe-area-inset-left));
+    right: max(0.55rem, env(safe-area-inset-right));
+    bottom: max(0.55rem, env(safe-area-inset-bottom));
+    max-height: 62%;
+  }
+
+  .is-native-app #app.is-ui-hidden .panel {
+    transform: translateY(8px);
+  }
+
+  .is-native-app .panel-intro {
+    display: none;
+  }
+
+  .is-native-app .live-adjust-hud {
+    bottom: auto;
+    top: max(0.8rem, env(safe-area-inset-top));
   }
 }

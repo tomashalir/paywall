@@ -1,0 +1,100 @@
+# Xcode project definition. Generate Scanbass.xcodeproj with:
+#   brew install xcodegen
+#   npm run apple:project        (from the repo root)
+# Edit this file instead of the generated project; Scanbass.xcodeproj is not committed.
+name: Scanbass
+
+options:
+  bundleIdPrefix: com.scanbass
+  developmentLanguage: en
+  createIntermediateGroups: true
+  deploymentTarget:
+    iOS: "16.0"
+    macOS: "13.0"
+
+settings:
+  base:
+    PRODUCT_NAME: Scanbass
+    # iOS and macOS share one bundle ID so App Store Connect can offer Universal Purchase:
+    # buy Pro once, unlocked on iPhone, iPad and Mac.
+    PRODUCT_BUNDLE_IDENTIFIER: com.scanbass.visualizer
+    SCANBASS_PRO_PRODUCT_ID: com.scanbass.visualizer.pro
+    MARKETING_VERSION: 1.0.0
+    CURRENT_PROJECT_VERSION: 1
+    SWIFT_VERSION: "5.0"
+    CODE_SIGN_STYLE: Automatic
+    # Set your Apple Developer Team ID here (or pick the team in Xcode > Signing & Capabilities).
+    DEVELOPMENT_TEAM: ""
+    ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+
+targetTemplates:
+  ScanbassApp:
+    type: application
+    sources:
+      - path: Shared
+        excludes:
+          - PrivacyInfo.xcprivacy
+      - path: Shared/PrivacyInfo.xcprivacy
+        buildPhase: resources
+      # The Vite build (`npm run build:apple`) lands here and ships inside the app.
+      - path: web
+        type: folder
+        buildPhase: resources
+      - path: Scanbass.storekit
+        buildPhase: none
+    preBuildScripts:
+      - name: Check web bundle
+        basedOnDependencyAnalysis: false
+        script: |
+          if [ ! -f "${SRCROOT}/web/index.html" ]; then
+            echo "error: apple/web/index.html is missing. Run 'npm run build:apple' in the repo root, then build again."
+            exit 1
+          fi
+
+targets:
+  Scanbass-iOS:
+    templates: [ScanbassApp]
+    platform: iOS
+    sources:
+      - path: iOS
+    settings:
+      base:
+        INFOPLIST_FILE: iOS/Info.plist
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SUPPORTS_MACCATALYST: NO
+        # The native macOS target below is the Mac version.
+        SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO
+
+  Scanbass-macOS:
+    templates: [ScanbassApp]
+    platform: macOS
+    sources:
+      - path: macOS
+    settings:
+      base:
+        INFOPLIST_FILE: macOS/Info.plist
+        CODE_SIGN_ENTITLEMENTS: macOS/Scanbass.entitlements
+        ENABLE_HARDENED_RUNTIME: YES
+        COMBINE_HIDPI_IMAGES: YES
+
+schemes:
+  Scanbass-iOS:
+    build:
+      targets:
+        Scanbass-iOS: all
+    run:
+      config: Debug
+      storeKitConfiguration: Scanbass.storekit
+    archive:
+      config: Release
+
+  Scanbass-macOS:
+    build:
+      targets:
+        Scanbass-macOS: all
+    run:
+      config: Debug
+      storeKitConfiguration: Scanbass.storekit
+    archive:
+      config: Release

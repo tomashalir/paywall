@@ -3,3 +3,8 @@ node_modules
 dist
 .vite
 vst-plugin/build
+apple/web/*
+!apple/web/.gitkeep
+apple/*.xcodeproj
+apple/build
+xcuserdata

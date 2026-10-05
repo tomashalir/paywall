@@ -1,0 +1,35 @@
+{
+  "identifier" : "5C4A1E7B",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "4.99",
+      "familyShareable" : true,
+      "internalID" : "6A1F2C3D",
+      "localizations" : [
+        {
+          "description" : "Unlock every scene and the advanced tuner.",
+          "displayName" : "Scanbass Pro",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.scanbass.visualizer.pro",
+      "referenceName" : "Scanbass Pro",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_US",
+    "_storefront" : "USA"
+  },
+  "subscriptionGroups" : [
+
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}

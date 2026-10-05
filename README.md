@@ -4,6 +4,8 @@ A browser-based Single Page Application built with **Vite + Three.js + Web Audio
 
 > VST3 version: a JUCE plugin scaffold with live DAW audio visualization is now included in [`vst-plugin`](./vst-plugin/README.md).
 
+> App Store version (iPhone, iPad, Mac) with a one-time "Scanbass Pro" in-app purchase: see [`apple/README.md`](./apple/README.md). Quick start on a Mac: `brew install xcodegen && npm install && npm run apple`.
+
 It contains 9 monochrome, audio-reactive scenes (5 presets per scene):
 
 1. **Sphere (Orbit)**: point-sphere + rings reacting to bass/treble

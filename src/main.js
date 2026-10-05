@@ -2,6 +2,10 @@ import './styles.css';
 
 import { AudioEngine } from './core/AudioEngine';
 import { VisualizerApp } from './core/VisualizerApp';
+import { callNative, getNativePlatform } from './native/nativeBridge';
+import { Entitlements } from './native/entitlements';
+import { Paywall } from './native/paywall';
+import { installTouchGestures } from './native/touchGestures';
 
 const MAX_AUDIO_FILE_SIZE_BYTES = 180 * 1024 * 1024;
 const AUDIO_EXTENSION_PATTERN = /\.(mp3|wav|ogg|m4a|aac|flac|aiff|aif)$/i;
@@ -37,8 +41,24 @@ const statusBanner = document.querySelector('#status-banner');
 const dropOverlay = document.querySelector('#drop-overlay');
 const advancedControlButtons = [...document.querySelectorAll('.advanced-control')];
 
+const nativePlatform = getNativePlatform();
+const isNativeApp = nativePlatform !== null;
+const UPLOAD_LABEL = isNativeApp ? 'Open Audio File' : 'Upload MP3/WAV';
+
+if (isNativeApp) {
+  document.documentElement.classList.add('is-native-app', `platform-${nativePlatform}`);
+}
+
 const audioEngine = new AudioEngine();
 const app = new VisualizerApp(canvas, audioEngine);
+const entitlements = new Entitlements();
+const paywall = entitlements.isGated
+  ? new Paywall(entitlements, {
+      onUnlocked: () => {
+        setStatus('Scanbass Pro unlocked. Enjoy every scene.', 'success', 2600);
+      }
+    })
+  : null;
 const uiState = {
   isTunerVisible: false,
   isLoadingTrack: false,
@@ -138,7 +158,7 @@ function setControlsState() {
   audioInput.disabled = uiState.isLoadingTrack;
   playBtn.disabled = uiState.isLoadingTrack || !hasTrack || isPlaying;
   pauseBtn.disabled = uiState.isLoadingTrack || !hasTrack || !isPlaying;
-  uploadBtn.textContent = uiState.isLoadingTrack ? 'Loading...' : 'Upload MP3/WAV';
+  uploadBtn.textContent = uiState.isLoadingTrack ? 'Loading...' : UPLOAD_LABEL;
 }
 
 function setLoadingState(isLoading) {
@@ -177,6 +197,48 @@ function setSceneUI(index) {
   });
 
   sceneLabel.textContent = `Scene ${index + 1} / ${app.getSceneCount()} · ${app.getActiveSceneName()}`;
+}
+
+function setSceneLocks() {
+  sceneButtons.forEach((button) => {
+    const index = Number(button.dataset.sceneIndex);
+    const isLocked = !entitlements.isSceneUnlocked(index);
+    button.classList.toggle('is-locked', isLocked);
+    if (isLocked) {
+      button.setAttribute('aria-label', `${button.textContent.trim()} (Pro)`);
+    } else {
+      button.removeAttribute('aria-label');
+    }
+  });
+}
+
+function goToScene(index) {
+  const count = app.getSceneCount();
+  const nextIndex = ((index % count) + count) % count;
+  if (!entitlements.isSceneUnlocked(nextIndex)) {
+    paywall?.open('scene');
+    return;
+  }
+
+  app.setScene(nextIndex);
+  refreshAllUI();
+}
+
+function changePreset(direction) {
+  if (direction > 0) {
+    app.nextPreset();
+  } else {
+    app.previousPreset();
+  }
+  setPresetUI();
+  renderSceneSettings();
+  renderPresetParameters();
+}
+
+function setKeepAwake(value) {
+  if (nativePlatform === 'ios' || nativePlatform === 'macos') {
+    callNative('app.setKeepAwake', { value }).catch(() => {});
+  }
 }
 
 function setPresetUI() {
@@ -724,26 +786,24 @@ sceneButtons.forEach((button) => {
       return;
     }
 
-    app.setScene(next);
-    refreshAllUI();
+    goToScene(next);
   });
 });
 
 presetPrevBtn.addEventListener('click', () => {
-  app.previousPreset();
-  setPresetUI();
-  renderSceneSettings();
-  renderPresetParameters();
+  changePreset(-1);
 });
 
 presetNextBtn.addEventListener('click', () => {
-  app.nextPreset();
-  setPresetUI();
-  renderSceneSettings();
-  renderPresetParameters();
+  changePreset(1);
 });
 
 toggleTunerBtn.addEventListener('click', () => {
+  if (!uiState.isTunerVisible && !entitlements.isFeatureUnlocked('advancedControls')) {
+    paywall?.open('advancedControls');
+    return;
+  }
+
   setTunerVisibility(!uiState.isTunerVisible);
 });
 
@@ -795,6 +855,10 @@ copyScenePresetsBtn.addEventListener('click', async () => {
 });
 
 window.addEventListener('keydown', (event) => {
+  if (paywall?.isOpen()) {
+    return;
+  }
+
   const target = event.target;
   if (
     target instanceof HTMLInputElement &&
@@ -805,41 +869,31 @@ window.addEventListener('keydown', (event) => {
 
   const keyNumber = Number.parseInt(event.key, 10);
   if (Number.isInteger(keyNumber) && keyNumber >= 1 && keyNumber <= app.getSceneCount()) {
-    const index = keyNumber - 1;
-    app.setScene(index);
-    refreshAllUI();
+    goToScene(keyNumber - 1);
   }
 
   if (event.key === 'ArrowRight') {
     event.preventDefault();
-    app.nextScene();
-    refreshAllUI();
+    goToScene(app.getActiveSceneIndex() + 1);
   }
 
   if (event.key === 'ArrowLeft') {
     event.preventDefault();
-    app.previousScene();
-    refreshAllUI();
+    goToScene(app.getActiveSceneIndex() - 1);
   }
 
   if (event.key === 'ArrowUp' || event.key === ']') {
     if (event.key === 'ArrowUp') {
       event.preventDefault();
     }
-    app.nextPreset();
-    setPresetUI();
-    renderSceneSettings();
-    renderPresetParameters();
+    changePreset(1);
   }
 
   if (event.key === 'ArrowDown' || event.key === '[') {
     if (event.key === 'ArrowDown') {
       event.preventDefault();
     }
-    app.previousPreset();
-    setPresetUI();
-    renderSceneSettings();
-    renderPresetParameters();
+    changePreset(-1);
   }
 });
 
@@ -880,18 +934,21 @@ window.addEventListener('drop', async (event) => {
 });
 
 audioEngine.audio.addEventListener('ended', () => {
+  setKeepAwake(false);
   setPlayStateText();
   setControlsState();
   setTimeText();
 });
 
 audioEngine.audio.addEventListener('pause', () => {
+  setKeepAwake(false);
   setPlayStateText();
   setControlsState();
   setTimeText();
 });
 
 audioEngine.audio.addEventListener('play', () => {
+  setKeepAwake(true);
   setPlayStateText();
   setControlsState();
 });
@@ -911,7 +968,27 @@ setTimeText();
 setControlsState();
 setStatus('Ready. Upload an audio file to begin.');
 setTunerVisibility(false);
+setSceneLocks();
 app.start();
+
+if (isNativeApp) {
+  installTouchGestures(canvas, {
+    onTap: () => document.querySelector('#app').classList.toggle('is-ui-hidden'),
+    onSwipeHorizontal: (direction) => goToScene(app.getActiveSceneIndex() + direction),
+    onSwipeVertical: (direction) => changePreset(direction)
+  });
+}
+
+entitlements.onChange(() => {
+  setSceneLocks();
+  if (!entitlements.isFeatureUnlocked('advancedControls') && uiState.isTunerVisible) {
+    setTunerVisibility(false);
+  }
+  if (!entitlements.isSceneUnlocked(app.getActiveSceneIndex())) {
+    goToScene(0);
+  }
+});
+entitlements.init();
 
 window.addEventListener('beforeunload', () => {
   app.dispose();
